@@ -24,6 +24,16 @@ def buscar_cotacao(ticker):
     
     }
 
+def buscar_varias(tickers):
+
+    resultados = []
+
+    for ticker in tickers:
+        resultado_cotacao = buscar_cotacao(ticker)
+        resultados.append(resultado_cotacao)
+
+    return resultados
+
 
 if __name__ == "__main__":
-    print(buscar_cotacao("PETR4.SA"))
+    print(buscar_varias(["PETR4.SA", "VALE3.SA", "ITUB4.SA"]))
