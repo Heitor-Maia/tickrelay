@@ -1,6 +1,6 @@
 import warnings
 import yfinance as yf
-
+import json
 
 warnings.filterwarnings("ignore")
 
@@ -60,6 +60,16 @@ def maior_alta_e_queda(resultados):
 
     return{"maior_alta": alta, "maior_queda": queda}
 
+def ler_carteira():
+
+    with open("carteira.json") as arquivo:
+
+        tickers = json.load(arquivo)
+
+        return tickers
+
+
 if __name__ == "__main__":
-    cotacoes = buscar_varias(["XXXX9.SA", "YYYY9.SA"])
+    tickers = ler_carteira()
+    cotacoes = buscar_varias(tickers)
     print(maior_alta_e_queda(cotacoes))
