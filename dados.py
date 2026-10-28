@@ -29,11 +29,18 @@ def buscar_varias(tickers):
     resultados = []
 
     for ticker in tickers:
-        resultado_cotacao = buscar_cotacao(ticker)
-        resultados.append(resultado_cotacao)
+
+        try:
+            resultado_cotacao = buscar_cotacao(ticker)
+            resultados.append(resultado_cotacao)
+
+        except:
+            print(f"Erro ao buscar {ticker}")
+            resultados.append({"ticker": ticker, "erro": True})
+
 
     return resultados
 
 
 if __name__ == "__main__":
-    print(buscar_varias(["PETR4.SA", "VALE3.SA", "ITUB4.SA"]))
+    print(buscar_varias(["PETR4.SA", "XXXX9.SA", "VALE3.SA"]))
