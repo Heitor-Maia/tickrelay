@@ -41,6 +41,25 @@ def buscar_varias(tickers):
 
     return resultados
 
+def maior_alta_e_queda(resultados):
+
+    validos = [r for r in resultados if "erro" not in r]
+
+    if not validos:
+        return None
+
+    alta = max(validos, key=lambda r: r["variacao"])
+    queda = min(validos, key=lambda r: r["variacao"])
+
+    if alta["variacao"] <= 0:
+        alta = None
+
+    if queda["variacao"] >= 0:
+        queda = None     
+
+
+    return{"maior_alta": alta, "maior_queda": queda}
 
 if __name__ == "__main__":
-    print(buscar_varias(["PETR4.SA", "XXXX9.SA", "VALE3.SA"]))
+    cotacoes = buscar_varias(["XXXX9.SA", "YYYY9.SA"])
+    print(maior_alta_e_queda(cotacoes))
