@@ -72,4 +72,4 @@ def ler_carteira():
 if __name__ == "__main__":
     tickers = ler_carteira()
     cotacoes = buscar_varias(tickers)
-    print(maior_alta_e_queda(cotacoes))
+    print(cotacoes)
