@@ -81,7 +81,29 @@ def buscar_carteira(carteira):
 
     return resultado
 
+def buscar_historico(ticker, periodo="1mo"):
+
+    tabela = yf.Ticker(ticker).history(period=periodo)
+
+    if tabela.empty:
+        raise ValueError(f"Sem histórico para {ticker}")
+
+    resultado = []
+
+    for data, linha in tabela.iterrows():
+        resultado.append({
+
+            "data": data.strftime("%Y-%m-%d"),
+            "abertura": round(float(linha["Open"]), 2),
+            "maxima": round(float(linha["High"]), 2),
+            "minima": round(float(linha["Low"]), 2),
+            "fechamento": round(float(linha["Close"]), 2),
+            "volume": int(linha["Volume"]),
+            
+        })
+
+    return resultado
+
 
 if __name__ == "__main__":
-    carteira = ler_carteira()
-    print(buscar_carteira(carteira))
+    print(buscar_historico("VALE3.SA", "5d"))

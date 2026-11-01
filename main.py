@@ -1,11 +1,13 @@
 import time
 from fastapi import FastAPI, HTTPException
-from dados import buscar_cotacao, buscar_varias, maior_alta_e_queda, ler_carteira, buscar_carteira
+from dados import buscar_cotacao, buscar_varias, maior_alta_e_queda, ler_carteira, buscar_carteira,buscar_historico
 
 app = FastAPI()
 
 TEMPO_CACHE = 60
 cache = {"hora": 0, "dados": None}
+
+PERIODOS = ["5d", "1mo", "3mo", "6mo", "1y", "5y"]
 
 cache_indices = {}
 
@@ -52,3 +54,30 @@ def carteira():
 
 
     return resposta
+
+
+@app.get("/historico/{ticker}")
+def historico(ticker: str, periodo: str = "1mo"):
+    
+    ticker = ticker.upper()
+
+    if periodo not in PERIODOS:
+        
+        raise HTTPException(
+            
+            status_code=400,
+            detail=f"Período inválido. Use um destes: {', '.join(PERIODOS)}",
+        
+        )
+
+    try:
+        
+        return buscar_historico(ticker, periodo)
+    
+    except ValueError:
+        
+        raise HTTPException(status_code=404, detail=f"Sem histórico para {ticker}")
+    
+    except Exception:
+        
+        raise HTTPException(status_code=502, detail="Não foi possível buscar o histórico")
