@@ -19,6 +19,8 @@ SIMBOLOS_MOEDA = {"BRL": "R$", "USD": "US$", "EUR": "€", "GBP": "£"}
 VERDE = "#22c55e"
 VERMELHO = "#ef4444"
 
+PX_POR_PT = 100 / 72  # a figura usa dpi=100
+
 
 def formatar_data(texto):
     ano, mes, dia = texto.split("-")
@@ -34,10 +36,23 @@ def formatar_preco(valor, simbolo):
     return f"{simbolo} {texto}"
 
 
-def texto_em_caixa(fig, x, y, texto, cores, cor_destaque, tamanho, negrito=False, cor_texto=None, recuo=0):
+def medir_caixa(texto, tamanho, largura_img, altura_img, negrito=False):
+    # estimativa do tamanho de um texto com caixa, em fração da imagem
+    media = 0.66 if negrito else 0.60
+    pad = 0.5 * tamanho * PX_POR_PT
+    largura = len(texto) * tamanho * PX_POR_PT * media + 2 * pad
+    altura = 2.2 * tamanho * PX_POR_PT
+    return largura / largura_img, altura / altura_img
+
+
+def texto_em_caixa(fig, x_borda, y, texto, cores, cor_destaque, tamanho, largura_img,
+                   negrito=False, cor_texto=None, recuo=0):
     peso = "bold" if negrito else "normal"
     estilo_caixa = "round,pad=0.5"
     texto = " " * recuo + texto
+
+    # x_borda é a borda esquerda da caixa; o texto começa um pad depois
+    x = x_borda + (0.5 * tamanho * PX_POR_PT) / largura_img
 
     # sombra: o mesmo texto, deslocado, com o texto invisível e só a caixa colorida aparecendo
     fig.text(
@@ -106,13 +121,10 @@ def gerar_grafico(historico, titulo, largura=800, altura=480, cor="#c9a24d", tem
     ax.set_ylim(base, maximo + margem)
     ax.set_xlim(0, max(1, len(datas) - 1))
 
-    # rótulos de data espalhados, incluindo o primeiro e o último dia
+    # rótulos de data: a quantidade depende da largura da imagem
     total = len(datas)
-    quantidade = min(total, 6)
-    if quantidade > 1:
-        indices = sorted({round(i * (total - 1) / (quantidade - 1)) for i in range(quantidade)})
-    else:
-        indices = [0]
+    quantidade = max(2, min(total, 8, largura // 130))
+    indices = sorted({round(i * (total - 1) / (quantidade - 1)) for i in range(quantidade)})
 
     ax.set_xticks(indices)
     rotulos = ax.set_xticklabels([formatar_data(datas[i]) for i in indices])
@@ -128,27 +140,57 @@ def gerar_grafico(historico, titulo, largura=800, altura=480, cor="#c9a24d", tem
     for lado in ["top", "right", "left", "bottom"]:
         ax.spines[lado].set_visible(False)
 
-    y_topo = 0.93
+    # --- cabeçalho: nome da ação e legenda dos pontos ---
+    compacto = largura < 700
+    tam_titulo = 12 if compacto else 15
+    tam_legenda = 8 if compacto else 9
+    recuo = 4
+    folga = 0.025
+
+    legendas = [
+        ("Maior alta", maximo, VERDE),
+        ("Maior baixa", minimo, VERMELHO),
+    ]
+    textos = [f"{rotulo}  {formatar_preco(valor, simbolo)}" for rotulo, valor, _ in legendas]
+
+    _, h_titulo = medir_caixa(titulo, tam_titulo, largura, altura, negrito=True)
+    medidas = [medir_caixa(" " * recuo + t, tam_legenda, largura, altura) for t in textos]
+
+    x_titulo = 0.03 if compacto else 0.04
+    y_titulo = 0.985 - h_titulo / 2
+
+    if not compacto:
+        # uma linha: nome à esquerda, legendas encostadas na direita
+        x2 = 0.97 - medidas[1][0]
+        x1 = x2 - folga - medidas[0][0]
+        posicoes_legenda = [(x1, y_titulo), (x2, y_titulo)]
+        topo_grafico = y_titulo - h_titulo / 2 - 0.025
+    else:
+        # duas linhas: nome em cima, legendas embaixo
+        h_legenda = medidas[0][1]
+        y_legenda = y_titulo - h_titulo / 2 - 0.015 - h_legenda / 2
+        x1 = 0.03
+        x2 = x1 + medidas[0][0] + folga
+        posicoes_legenda = [(x1, y_legenda), (x2, y_legenda)]
+        topo_grafico = y_legenda - h_legenda / 2 - 0.025
 
     # nome da ação: borda e sombra na mesma cor da linha do gráfico
-    texto_em_caixa(fig, 0.06, y_topo, titulo, cores, cor, tamanho=15, negrito=True)
+    texto_em_caixa(fig, x_titulo, y_titulo, titulo, cores, cor, tam_titulo, largura, negrito=True)
 
-    # legenda: caixa com borda e sombra na cor do ponto, e o ponto dentro dela
-    for x_texto, rotulo, valor, cor_ponto in [
-        (0.44, "Maior alta", maximo, VERDE),
-        (0.69, "Maior baixa", minimo, VERMELHO),
-    ]:
+    # legendas: caixa com borda e sombra na cor do ponto, e o ponto dentro dela
+    for (rotulo, valor, cor_ponto), texto, (x_borda, y) in zip(legendas, textos, posicoes_legenda):
         texto_em_caixa(
-            fig, x_texto, y_topo, f"{rotulo}  {formatar_preco(valor, simbolo)}",
-            cores, cor_ponto, tamanho=9, cor_texto=cores["texto"], recuo=4,
+            fig, x_borda, y, texto, cores, cor_ponto, tam_legenda, largura,
+            cor_texto=cores["texto"], recuo=recuo,
         )
+        x_ponto = x_borda + (0.5 * tam_legenda * PX_POR_PT + 0.9 * tam_legenda) / largura
         fig.add_artist(Line2D(
-            [x_texto + 0.010], [y_topo], marker="o", color="none",
+            [x_ponto], [y], marker="o", color="none",
             markerfacecolor=cor_ponto, markeredgecolor="none", markersize=7,
             transform=fig.transFigure, zorder=10,
         ))
 
-    fig.tight_layout(rect=(0.01, 0, 0.985, 0.86))
+    fig.tight_layout(rect=(0.01, 0, 0.985, topo_grafico))
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", facecolor=fig.get_facecolor())
@@ -161,17 +203,7 @@ if __name__ == "__main__":
 
     dados = buscar_historico("VALE3.SA", "3mo")
 
-    for tema in ["escuro", "claro"]:
-        png = gerar_grafico(dados, "VALE3.SA", tema=tema)
-        with open(f"teste_{tema}.png", "wb") as arquivo:
+    for tema, largura, altura in [("escuro", 800, 480), ("claro", 800, 480), ("escuro", 400, 300)]:
+        png = gerar_grafico(dados, "VALE3.SA", largura=largura, altura=altura, tema=tema)
+        with open(f"teste_{tema}_{largura}.png", "wb") as arquivo:
             arquivo.write(png)
-
-
-if __name__ == "__main__":
-    from dados import buscar_historico
-
-    dados = buscar_historico("VALE3.SA", "3mo")
-    png = gerar_grafico(dados, "VALE3.SA")
-
-    with open("teste.png", "wb") as arquivo:
-        arquivo.write(png)
