@@ -12,8 +12,6 @@ cache = {"hora": 0, "dados": None}
 def cotacao(ticker: str):
 
     ticker = ticker.upper()
-    if not ticker.endswith(".SA") and not ticker.startswith("^"):
-        ticker = ticker + ".SA"
 
     try:
         return buscar_cotacao(ticker)
