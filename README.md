@@ -11,8 +11,8 @@ O tickrelay busca dados de ativos do mercado financeiro e os entrega por meio de
 ## Status
 
 - [x] Estrutura inicial do projeto
-- [ ] Busca de dados de cotações
-- [ ] Endpoints da API
+- [x] Busca de dados de cotações
+- [x] Endpoints da API
 - [ ] Suporte a múltiplas bolsas
 - [ ] Testes
 - [ ] Documentação
