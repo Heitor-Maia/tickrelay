@@ -21,7 +21,8 @@ def buscar_cotacao(ticker):
         "preco": round(preco, 2),
         "fechamento_anterior": round(fechamento_anterior, 2),
         "variacao": round(variacao, 2),
-    
+        "moeda":info["currency"],
+
     }
 
 def buscar_varias(tickers):
@@ -69,7 +70,18 @@ def ler_carteira():
         return tickers
 
 
+def buscar_carteira(carteira):
+
+    resultado = {}
+
+    for nome, simbolos in carteira.items():
+        itens = buscar_varias(simbolos)
+        destaques = maior_alta_e_queda(itens)
+        resultado[nome] = {"itens": itens, "destaques": destaques}
+
+    return resultado
+
+
 if __name__ == "__main__":
-    tickers = ler_carteira()
-    cotacoes = buscar_varias(tickers)
-    print(cotacoes)
+    carteira = ler_carteira()
+    print(buscar_carteira(carteira))
