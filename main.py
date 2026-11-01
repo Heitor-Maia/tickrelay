@@ -10,6 +10,7 @@ cache = {"hora": 0, "dados": None}
 PERIODOS = ["5d", "1mo", "3mo", "6mo", "1y", "5y"]
 
 cache_indices = {}
+cache_historico = {}
 
 @app.get("/cotacao/{ticker}")
 def cotacao(ticker: str):
@@ -70,9 +71,20 @@ def historico(ticker: str, periodo: str = "1mo"):
         
         )
 
+    chave = f"{ticker}|{periodo}"
+    agora = time.time()
+
+    if chave in cache_historico:
+        guardado = cache_historico[chave]
+
+        if agora - guardado["hora"] < TEMPO_CACHE:
+            return guardado["dados"]
+
     try:
         
-        return buscar_historico(ticker, periodo)
+        dados = buscar_historico(ticker, periodo)
+        cache_historico[chave] = {"hora": agora, "dados": dados}
+        return dados
     
     except ValueError:
         
