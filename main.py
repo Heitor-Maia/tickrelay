@@ -92,4 +92,4 @@ def historico(ticker: str, periodo: str = "1mo"):
     
     except Exception:
         
-        raise HTTPException(status_code=502, detail="Não foi possível buscar o histórico")
+        raise HTTPException(status_code=502, detail="Não foi possível buscar o histórico")  
