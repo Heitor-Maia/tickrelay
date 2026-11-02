@@ -23,7 +23,6 @@ gráficos em PNG que podem ser personalizados pela URL.
 - [x] Suporte a múltiplas bolsas (você informa o símbolo completo)
 - [x] Histórico de preços
 - [x] Gráficos em PNG
-- [ ] Testes automatizados
 - [x] Documentação
 
 ## Instalação
