@@ -182,3 +182,13 @@ período, e marca a maior alta e a maior baixa. A moeda é informada por quem ch
 ├── carteira.example.json    # modelo da carteira
 └── requirements.txt
 ```
+
+## Créditos
+
+- Dados de mercado: [Yahoo Finance](https://finance.yahoo.com), acessados pela biblioteca [yfinance](https://github.com/ranaroussi/yfinance).
+- API: [FastAPI](https://fastapi.tiangolo.com).
+- Gráficos: [Matplotlib](https://matplotlib.org).
+
+## Licença
+
+Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).
