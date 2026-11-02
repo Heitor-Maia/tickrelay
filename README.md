@@ -56,8 +56,7 @@ A carteira é dividida em grupos, e os nomes dos grupos são livres:
 }
 ```
 
-O `carteira.json` não vai para o Git (está no `.gitignore`), então a sua carteira
-real fica só no seu computador.
+O `carteira.json` é ignorado pelo Git (está no `.gitignore`), então cada pessoa mantém a própria carteira localmente e ela nunca é enviada ao repositório.
 
 ## Rodar
 
