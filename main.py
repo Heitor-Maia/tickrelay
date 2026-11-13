@@ -119,8 +119,8 @@ def grafico(
 
     if periodo not in PERIODOS:
         raise HTTPException(status_code=400, detail=f"Período inválido. Use: {', '.join(PERIODOS)}")
-    if not 400 <= largura <= 1920 or not 250 <= altura <= 1080:
-        raise HTTPException(status_code=400, detail="Tamanho inválido: largura de 400 a 1920 e altura de 250 a 1080")
+    if not 300 <= largura <= 1920 or not 200 <= altura <= 1080:
+        raise HTTPException(status_code=400, detail="Tamanho inválido: largura de 300 a 1920 e altura de 200 a 1080")
     if cor not in CORES:
         raise HTTPException(status_code=400, detail=f"Cor inválida. Use: {', '.join(CORES)}")
     if tema not in TEMAS:
