@@ -1,9 +1,27 @@
 import time
+
 from fastapi import FastAPI, HTTPException, Response
-from dados import buscar_cotacao, buscar_varias, maior_alta_e_queda, ler_carteira, buscar_carteira, buscar_historico
-from graficos import gerar_grafico, TEMAS, SIMBOLOS_MOEDA
+
+from dados import (
+    buscar_carteira,
+    buscar_cotacao,
+    buscar_historico,
+    buscar_varias,
+    buscar_variacoes,
+    ler_carteira,
+)
+from graficos import SIMBOLOS_MOEDA, TEMAS, gerar_grafico
 
 app = FastAPI()
+
+TEMPO_CACHE = 60
+
+cache = {"hora": 0, "dados": None}
+cache_indices = {}
+cache_historico = {}
+cache_variacoes = {}
+
+PERIODOS = ["5d", "1mo", "3mo", "6mo", "1y", "5y"]
 
 CORES = {
     "dourado": "#c9a24d",
@@ -14,13 +32,6 @@ CORES = {
     "branco": "#e6e9ef",
 }
 
-TEMPO_CACHE = 60
-cache = {"hora": 0, "dados": None}
-
-PERIODOS = ["5d", "1mo", "3mo", "6mo", "1y", "5y"]
-
-cache_indices = {}
-cache_historico = {}
 
 def obter_historico(ticker, periodo):
     chave = f"{ticker}|{periodo}"
@@ -38,14 +49,15 @@ def obter_historico(ticker, periodo):
 
 @app.get("/cotacao/{ticker}")
 def cotacao(ticker: str):
-
     ticker = ticker.upper()
 
     try:
         return buscar_cotacao(ticker)
-
     except Exception:
-        raise HTTPException(status_code=404, detail=f"Não foi possivel buscar {ticker}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Não foi possível buscar {ticker}. Use o símbolo completo, ex: PETR4.SA, VOO, BTC-USD",
+        )
 
 
 @app.get("/indices")
@@ -64,35 +76,31 @@ def indices(simbolos: str = "^BVSP,^GSPC,^IXIC,^DJI"):
 
     return resposta
 
+
 @app.get("/carteira")
 def carteira():
     agora = time.time()
 
     if cache["dados"] is not None and agora - cache["hora"] < TEMPO_CACHE:
-            return cache["dados"]
+        return cache["dados"]
 
-    carteira = ler_carteira()
-    resposta = buscar_carteira(carteira)
+    carteira_lida = ler_carteira()
+    resposta = buscar_carteira(carteira_lida)
 
     cache["dados"] = resposta
     cache["hora"] = agora
-
 
     return resposta
 
 
 @app.get("/historico/{ticker}")
 def historico(ticker: str, periodo: str = "1mo"):
-    
     ticker = ticker.upper()
 
     if periodo not in PERIODOS:
-        
         raise HTTPException(
-            
             status_code=400,
             detail=f"Período inválido. Use um destes: {', '.join(PERIODOS)}",
-        
         )
 
     try:
@@ -119,8 +127,8 @@ def grafico(
 
     if periodo not in PERIODOS:
         raise HTTPException(status_code=400, detail=f"Período inválido. Use: {', '.join(PERIODOS)}")
-    if not 300 <= largura <= 1920 or not 200 <= altura <= 1080:
-        raise HTTPException(status_code=400, detail="Tamanho inválido: largura de 300 a 1920 e altura de 200 a 1080")
+    if not 400 <= largura <= 1920 or not 250 <= altura <= 1080:
+        raise HTTPException(status_code=400, detail="Tamanho inválido: largura de 400 a 1920 e altura de 250 a 1080")
     if cor not in CORES:
         raise HTTPException(status_code=400, detail=f"Cor inválida. Use: {', '.join(CORES)}")
     if tema not in TEMAS:
@@ -129,12 +137,34 @@ def grafico(
         raise HTTPException(status_code=400, detail=f"Moeda inválida. Use: {', '.join(SIMBOLOS_MOEDA)}")
 
     try:
-        historico = obter_historico(ticker, periodo)
+        historico_dados = obter_historico(ticker, periodo)
     except ValueError:
         raise HTTPException(status_code=404, detail=f"Sem histórico para {ticker}")
     except Exception as erro:
         print(f"Erro no gráfico de {ticker}: {erro!r}")
         raise HTTPException(status_code=502, detail="Não foi possível buscar o histórico")
 
-    png = gerar_grafico(historico, ticker, largura, altura, CORES[cor], tema, moeda)
+    png = gerar_grafico(historico_dados, ticker, largura, altura, CORES[cor], tema, moeda)
     return Response(content=png, media_type="image/png")
+
+
+@app.get("/variacoes/{ticker}")
+def variacoes(ticker: str):
+    ticker = ticker.upper()
+    agora = time.time()
+
+    if ticker in cache_variacoes:
+        guardado = cache_variacoes[ticker]
+        if agora - guardado["hora"] < TEMPO_CACHE:
+            return guardado["dados"]
+
+    try:
+        dados = buscar_variacoes(ticker)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"Sem histórico para {ticker}")
+    except Exception as erro:
+        print(f"Erro nas variações de {ticker}: {erro!r}")
+        raise HTTPException(status_code=502, detail="Não foi possível buscar os dados")
+
+    cache_variacoes[ticker] = {"hora": agora, "dados": dados}
+    return dados
