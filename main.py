@@ -12,7 +12,11 @@ from dados import (
 )
 from graficos import SIMBOLOS_MOEDA, TEMAS, gerar_grafico
 
-app = FastAPI()
+app = FastAPI(
+    title="cachalot",
+    description="API de cotações de bolsas de valores, com carteira por grupos, histórico e gráficos.",
+    version="1.1.0",
+)
 
 TEMPO_CACHE = 60
 
